@@ -1,0 +1,26 @@
+2025-05-07 15:27:37,299 - INFO - Script started and configuration loaded successfully
+2025-05-07 15:27:37,302 - ERROR - Error processing data: [Errno 2] No such file or directory: 'C:\\Users\\Administrator\\Documents\\FXJEFE_Project\\Data\\FXJEFE_Features_with_labels.csv'
+2025-05-07 15:41:11,918 - INFO - Script started and configuration loaded successfully
+2025-05-07 15:41:11,920 - ERROR - Error processing data: [Errno 2] No such file or directory: 'C:\\Users\\Administrator\\Documents\\FXJEFE_Project\\Data\\training_data.csv'
+2025-05-07 15:49:44,416 - INFO - Script started and configuration loaded successfully
+2025-05-07 15:49:44,416 - ERROR - Error processing data: [Errno 2] No such file or directory: 'C:\\Users\\Administrator\\Documents\\FXJEFE_Project\\Data\\training_data.csv'
+2025-05-07 15:58:27,554 - INFO - Script started and configuration loaded successfully
+2025-05-07 15:58:27,593 - INFO - Training with 11 features: ['price', 'atr', 'ema_diff', 'rsi', 'macd_diff', 'vwap', 'price_vwap_diff', 'momentum', 'volume_delta', 'spread', 'sentiment']
+2025-05-07 15:58:27,783 - INFO - Model trained with test score: 1.0
+2025-05-07 15:58:27,827 - INFO - Model saved to C:\Users\Administrator\Documents\FXJEFE_Project\Models\my_model.pkl
+2025-05-07 16:10:21,529 - INFO - Script started and configuration loaded successfully
+2025-05-07 16:10:21,562 - INFO - Training with 11 features: ['price', 'atr', 'ema_diff', 'rsi', 'macd_diff', 'vwap', 'price_vwap_diff', 'momentum', 'volume_delta', 'spread', 'sentiment']
+2025-05-07 16:10:21,718 - INFO - Model trained with test score: 1.0
+2025-05-07 16:10:21,756 - INFO - Model saved to C:\Users\Administrator\Documents\FXJEFE_Project\Models\my_model.pkl
+2025-05-07 16:16:37,229 - INFO - Script started and configuration loaded successfully
+2025-05-07 16:16:37,274 - INFO - Training with 11 features: ['price', 'atr', 'ema_diff', 'rsi', 'macd_diff', 'vwap', 'price_vwap_diff', 'momentum', 'volume_delta', 'spread', 'sentiment']
+2025-05-07 16:16:37,762 - INFO - Model trained with test score: 0.745
+2025-05-07 16:16:37,826 - INFO - Model saved to C:\Users\Administrator\Documents\FXJEFE_Project\Models\my_model.pkl
+2025-05-07 16:58:06,416 - INFO - Script started and configuration loaded successfully
+2025-05-07 16:58:06,453 - INFO - Training with 11 features: ['price', 'atr', 'ema_diff', 'rsi', 'macd_diff', 'vwap', 'price_vwap_diff', 'momentum', 'volume_delta', 'spread', 'sentiment']
+2025-05-07 16:58:06,825 - INFO - Model trained with test score: 0.745
+2025-05-07 16:58:06,870 - INFO - Model saved to C:\Users\Administrator\Documents\FXJEFE_Project\Models\my_model.pkl
+2025-05-07 16:59:18,204 - INFO - Script started and configuration loaded successfully
+2025-05-07 16:59:18,218 - INFO - Training with 11 features: ['price', 'atr', 'ema_diff', 'rsi', 'macd_diff', 'vwap', 'price_vwap_diff', 'momentum', 'volume_delta', 'spread', 'sentiment']
+2025-05-07 16:59:18,586 - INFO - Model trained with test score: 0.745
+2025-05-07 16:59:18,628 - INFO - Model saved to C:\Users\Administrator\Documents\FXJEFE_Project\Models\my_model.pkl

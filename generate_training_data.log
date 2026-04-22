@@ -1,0 +1,17 @@
+2025-05-07 15:40:58,230 - INFO - Script started and configuration loaded successfully
+2025-05-07 15:40:58,290 - INFO - Number of rows in FXJEFE_Features.csv: 1000
+2025-05-07 15:40:58,334 - INFO - training_data.csv generated successfully.
+2025-05-07 15:49:22,740 - INFO - Script started and configuration loaded successfully
+2025-05-07 15:58:14,279 - INFO - Script started and configuration loaded successfully
+2025-05-07 15:58:14,345 - INFO - Number of rows in FXJEFE_Features.csv: 1000
+2025-05-07 15:58:14,395 - INFO - training_data.csv generated successfully at C:\Users\Administrator\Documents\FXJEFE_Project\Data\training_data.csv
+2025-05-07 16:10:11,749 - INFO - Script started and configuration loaded successfully
+2025-05-07 16:10:11,789 - INFO - Number of rows in FXJEFE_Features.csv: 1000
+2025-05-07 16:10:11,821 - INFO - training_data.csv generated successfully at C:\Users\Administrator\Documents\FXJEFE_Project\Data\training_data.csv
+2025-05-07 16:16:19,454 - INFO - Script started and configuration loaded successfully
+2025-05-07 16:16:19,517 - INFO - Number of rows in FXJEFE_Features.csv: 1000
+2025-05-07 16:16:19,570 - INFO - training_data.csv generated successfully at C:\Users\Administrator\Documents\FXJEFE_Project\Data\training_data.csv
+2025-05-07 16:57:49,303 - INFO - Script started and configuration loaded successfully
+2025-05-07 16:57:49,351 - INFO - Number of rows in FXJEFE_Features.csv: 1000
+2025-05-07 16:57:49,366 - INFO - Unique values in label column: [ 0  1 -1]
+2025-05-07 16:57:49,400 - INFO - training_data.csv generated successfully at C:\Users\Administrator\Documents\FXJEFE_Project\Data\training_data.csv
