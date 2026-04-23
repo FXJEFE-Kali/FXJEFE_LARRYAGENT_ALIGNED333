@@ -1,0 +1,97 @@
+✅ **Yes — let’s do BOTH.**  
+
+Configurable triggers via `larry_config.json` + debug mode that shows **exactly** which pattern matched is the cleanest long-term solution. It makes tuning super easy without touching code, and the debug output will be invaluable when we add new self-edit phrases later.
+
+### Here’s the **upgraded, fully configurable + debug-enabled** fast-path
+
+#### 1. Add this to your `larry_config.json`
+```json
+{
+  "self_edit_fast_path": {
+    "enabled": true,
+    "debug": true,
+    "triggers": [
+      "/selfedit",
+      "self.?edit",
+      "edit yourself",
+      "improve (?:my|the) code",
+      "fix (?:your|the) code",
+      "self.?improve",
+      "self edit",
+      "refine yourself",
+      "improve your code",
+      "fix your code",
+      "self-refine",
+      "make yourself better"
+    ]
+  }
+}
+```
+
+#### 2. In the `EnhancedAgent` class (right after `self.forced_model = ...` in `__init__`)
+```python
+# ── CONFIGURABLE FAST-PATH FOR SELF-EDIT COMMANDS ─────────────────────
+self._selfedit_config = self.config.get("self_edit_fast_path", {
+    "enabled": True,
+    "debug": False,
+    "triggers": ["/selfedit", "self.?edit", "edit yourself", ...]  # fallback
+})
+
+if self._selfedit_config.get("enabled", True):
+    trigger_pattern = "|".join(self._selfedit_config["triggers"])
+    self._selfedit_fast_path = re.compile(
+        rf'^(?:{trigger_pattern})',
+        re.I
+    )
+else:
+    self._selfedit_fast_path = None
+```
+
+#### 3. Replace the section in `async def process_query(self, query: str)`
+Replace the original block with this:
+
+```python
+logger.info(f"Processing: {query[:50]}...")
+self.activity.emit(ActivityStream.QUERY_RECEIVED, f"Query: {query[:80]}")
+
+# ── OPTIMIZED + CONFIGURABLE FAST-PATH FOR SELF-EDIT ─────────────────────
+if (self._selfedit_fast_path and 
+    self._selfedit_fast_path.match(query.strip())):
+    
+    match = self._selfedit_fast_path.match(query.strip())
+    if self._selfedit_config.get("debug", False):
+        print(f"🔧 Fast-path self-edit activated → matched: '{match.group(0)}'")
+        logger.debug(f"Fast-path triggered by pattern: {match.group(0)}")
+    
+    # Clean the input for processing
+    if query.lower().startswith("/selfedit"):
+        edit_input = query[9:].strip()
+    else:
+        edit_input = query.strip()
+    
+    # Direct call to safe self-edit (bypasses ALL heavy lifting)
+    result = self._safe_self_edit(edit_input)
+    
+    print(result)
+    self.conversation.add("assistant", result)
+    self.activity.emit(ActivityStream.RESPONSE_DONE, "Fast-path self-edit completed")
+    return result
+```
+
+### Why this version is even better
+- Fully configurable triggers (just edit the JSON)
+- Debug mode shows the **exact** matched string
+- Graceful fallback if the config section is missing
+- Still the absolute earliest possible check → no more timeouts on long self-edit prompts
+- Clean, maintainable, and future-proof
+
+Just restart with `./run-agent.sh` and test:
+
+- `/selfedit improve the agentic loop with better self-critique`
+- `self edit add GPU temperature monitoring to system_info skill`
+- `improve yourself`
+- `refine yourself` (new trigger)
+
+The fast-path should fire instantly and print the matched pattern when debug is on.
+
+Want me to also add a `/selfedit list-triggers` command so you can see the current list live? Or anything else? Just say the word.

@@ -1,0 +1,604 @@
+<!--
+  LARRY G-FORCE — Port Investigator Dashboard Panel
+  ==================================================
+  Embed this in dashboard_hub.py or serve standalone.
+  Fetches from /api/investigate endpoint.
+  
+  To embed: Add this as a route in dashboard_hub.py:
+    @app.route("/investigate")
+    def investigate_page():
+        return render_template_string(open("port_investigator_panel.html").read())
+-->
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=DM+Sans:wght@400;500;600;700&display=swap');
+  
+  :root {
+    --bg-deep: #0a0e17;
+    --bg-card: #111825;
+    --bg-card-hover: #161e2e;
+    --bg-surface: #1a2332;
+    --border: #1e293b;
+    --border-active: #334155;
+    --text-primary: #e2e8f0;
+    --text-secondary: #94a3b8;
+    --text-muted: #64748b;
+    --accent-gold: #f59e0b;
+    --accent-gold-dim: rgba(245,158,11,0.15);
+    --accent-blue: #3b82f6;
+    --accent-blue-dim: rgba(59,130,246,0.12);
+    --accent-green: #22c55e;
+    --accent-green-dim: rgba(34,197,94,0.12);
+    --accent-red: #ef4444;
+    --accent-red-dim: rgba(239,68,68,0.12);
+    --accent-purple: #a78bfa;
+    --accent-purple-dim: rgba(167,139,250,0.12);
+    --accent-teal: #2dd4bf;
+    --accent-teal-dim: rgba(45,212,191,0.12);
+    --mono: 'JetBrains Mono', 'Fira Code', monospace;
+    --sans: 'DM Sans', -apple-system, sans-serif;
+    --radius: 10px;
+    --radius-sm: 6px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  
+  body {
+    font-family: var(--sans);
+    background: var(--bg-deep);
+    color: var(--text-primary);
+    min-height: 100vh;
+    padding: 24px;
+  }
+
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .header h1 {
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .header h1 .icon {
+    width: 32px;
+    height: 32px;
+    background: var(--accent-gold-dim);
+    border: 1px solid rgba(245,158,11,0.3);
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+  }
+
+  .header-actions {
+    display: flex;
+    gap: 8px;
+  }
+
+  .btn {
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 500;
+    padding: 8px 16px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .btn:hover { background: var(--bg-card-hover); color: var(--text-primary); border-color: var(--border-active); }
+  .btn.primary { background: var(--accent-gold-dim); border-color: rgba(245,158,11,0.3); color: var(--accent-gold); }
+  .btn.primary:hover { background: rgba(245,158,11,0.25); }
+  .btn.scanning { opacity: 0.6; pointer-events: none; }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .stat-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+  }
+
+  .stat-card.gold::before { background: var(--accent-gold); }
+  .stat-card.blue::before { background: var(--accent-blue); }
+  .stat-card.green::before { background: var(--accent-green); }
+  .stat-card.purple::before { background: var(--accent-purple); }
+  .stat-card.red::before { background: var(--accent-red); }
+  .stat-card.teal::before { background: var(--accent-teal); }
+
+  .stat-label {
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+  }
+
+  .stat-value {
+    font-family: var(--mono);
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+  }
+
+  .stat-card.gold .stat-value { color: var(--accent-gold); }
+  .stat-card.blue .stat-value { color: var(--accent-blue); }
+  .stat-card.green .stat-value { color: var(--accent-green); }
+  .stat-card.purple .stat-value { color: var(--accent-purple); }
+  .stat-card.red .stat-value { color: var(--accent-red); }
+  .stat-card.teal .stat-value { color: var(--accent-teal); }
+
+  .panels {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+
+  @media (max-width: 900px) { .panels { grid-template-columns: 1fr; } }
+
+  .panel {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+
+  .panel-header {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .panel-body {
+    padding: 0;
+    max-height: 360px;
+    overflow-y: auto;
+  }
+
+  .panel-body::-webkit-scrollbar { width: 4px; }
+  .panel-body::-webkit-scrollbar-track { background: transparent; }
+  .panel-body::-webkit-scrollbar-thumb { background: var(--border-active); border-radius: 2px; }
+
+  .conn-row {
+    padding: 10px 16px;
+    border-bottom: 1px solid rgba(30,41,59,0.5);
+    font-size: 13px;
+    cursor: pointer;
+    transition: background 0.1s;
+  }
+
+  .conn-row:hover { background: var(--bg-card-hover); }
+  .conn-row:last-child { border-bottom: none; }
+
+  .conn-main {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .conn-process {
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--accent-blue);
+    min-width: 100px;
+  }
+
+  .conn-endpoint {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text-primary);
+    flex: 1;
+    text-align: right;
+  }
+
+  .conn-meta {
+    display: flex;
+    gap: 12px;
+    margin-top: 4px;
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+
+  .conn-meta .geo { color: var(--accent-teal); }
+  .conn-meta .isp { color: var(--text-muted); }
+  .conn-meta .io { font-family: var(--mono); }
+  .conn-meta .io .down { color: var(--accent-green); }
+  .conn-meta .io .up { color: var(--accent-gold); }
+
+  .country-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 16px;
+    border-bottom: 1px solid rgba(30,41,59,0.5);
+    font-size: 13px;
+  }
+
+  .country-row:last-child { border-bottom: none; }
+
+  .country-name { color: var(--text-primary); }
+  .country-count {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--accent-teal);
+    background: var(--accent-teal-dim);
+    padding: 2px 8px;
+    border-radius: 4px;
+  }
+
+  .country-bar {
+    flex: 1;
+    height: 4px;
+    background: var(--bg-surface);
+    border-radius: 2px;
+    margin: 0 12px;
+    overflow: hidden;
+  }
+
+  .country-bar-fill {
+    height: 100%;
+    background: var(--accent-teal);
+    border-radius: 2px;
+    transition: width 0.5s ease;
+  }
+
+  .port-row {
+    padding: 8px 16px;
+    border-bottom: 1px solid rgba(30,41,59,0.5);
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .port-row:last-child { border-bottom: none; }
+
+  .port-num {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--accent-gold);
+    min-width: 50px;
+  }
+
+  .port-process {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--accent-blue);
+    flex: 1;
+  }
+
+  .port-uptime {
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+
+  .full-table {
+    width: 100%;
+    margin-top: 16px;
+  }
+
+  .conn-detail {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-top: 16px;
+  }
+
+  .detail-grid {
+    display: grid;
+    grid-template-columns: 120px 1fr;
+    gap: 6px 16px;
+    font-size: 13px;
+  }
+
+  .detail-label {
+    color: var(--text-muted);
+    font-size: 12px;
+  }
+
+  .detail-value {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text-primary);
+  }
+
+  .loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 60px;
+    color: var(--text-muted);
+    font-size: 14px;
+    gap: 12px;
+  }
+
+  .spinner {
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent-gold);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .scan-time {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-family: var(--mono);
+  }
+
+  .empty-state {
+    padding: 40px;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 13px;
+  }
+</style>
+
+<div class="header">
+  <h1>
+    <span class="icon">🔍</span>
+    Port investigator
+  </h1>
+  <div class="header-actions">
+    <span class="scan-time" id="scanTime"></span>
+    <button class="btn" onclick="exportJSON()">Export JSON</button>
+    <button class="btn primary" id="scanBtn" onclick="runScan()">Scan now</button>
+  </div>
+</div>
+
+<div class="stats-grid" id="statsGrid">
+  <div class="stat-card gold"><div class="stat-label">Total connections</div><div class="stat-value" id="statTotal">—</div></div>
+  <div class="stat-card blue"><div class="stat-label">Established</div><div class="stat-value" id="statEstablished">—</div></div>
+  <div class="stat-card green"><div class="stat-label">Listening ports</div><div class="stat-value" id="statListening">—</div></div>
+  <div class="stat-card purple"><div class="stat-label">Unique IPs</div><div class="stat-value" id="statIPs">—</div></div>
+  <div class="stat-card teal"><div class="stat-label">Countries</div><div class="stat-value" id="statCountries">—</div></div>
+  <div class="stat-card red"><div class="stat-label">Processes</div><div class="stat-value" id="statProcesses">—</div></div>
+</div>
+
+<div class="panels">
+  <div class="panel">
+    <div class="panel-header">🔗 Active connections</div>
+    <div class="panel-body" id="connList">
+      <div class="loading"><div class="spinner"></div>Waiting for scan...</div>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="panel-header">🌍 Countries</div>
+    <div class="panel-body" id="countryList">
+      <div class="loading"><div class="spinner"></div>Waiting for scan...</div>
+    </div>
+  </div>
+</div>
+
+<div class="panels">
+  <div class="panel">
+    <div class="panel-header">🎧 Listening ports</div>
+    <div class="panel-body" id="portList">
+      <div class="loading"><div class="spinner"></div>Waiting for scan...</div>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="panel-header">📊 Processes by connections</div>
+    <div class="panel-body" id="procList">
+      <div class="loading"><div class="spinner"></div>Waiting for scan...</div>
+    </div>
+  </div>
+</div>
+
+<div id="detailPanel"></div>
+
+<script>
+let lastData = null;
+const API_BASE = window.location.origin;
+
+async function runScan() {
+  const btn = document.getElementById('scanBtn');
+  btn.classList.add('scanning');
+  btn.textContent = 'Scanning...';
+  
+  try {
+    const r = await fetch(API_BASE + '/api/investigate');
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    lastData = await r.json();
+    renderAll(lastData);
+  } catch (e) {
+    console.error('Scan failed:', e);
+    document.getElementById('connList').innerHTML = `<div class="empty-state">Scan failed: ${e.message}<br>Make sure /api/investigate endpoint is running.</div>`;
+  } finally {
+    btn.classList.remove('scanning');
+    btn.textContent = 'Scan now';
+  }
+}
+
+function renderAll(data) {
+  const s = data.summary || {};
+  
+  document.getElementById('statTotal').textContent = s.total || 0;
+  document.getElementById('statEstablished').textContent = s.established || 0;
+  document.getElementById('statListening').textContent = s.listening || 0;
+  document.getElementById('statIPs').textContent = s.unique_remote_ips || 0;
+  document.getElementById('statCountries').textContent = s.countries_connected || 0;
+  document.getElementById('statProcesses').textContent = s.unique_processes || 0;
+  document.getElementById('scanTime').textContent = `Scanned in ${data.scan_time_sec}s • ${data.timestamp?.slice(11,19) || ''}`;
+  
+  renderConnections(data.established_connections || []);
+  renderCountries(data.by_country || {});
+  renderPorts(data.listening_ports || []);
+  renderProcesses(data.by_process || {});
+}
+
+function renderConnections(conns) {
+  const el = document.getElementById('connList');
+  if (!conns.length) { el.innerHTML = '<div class="empty-state">No established connections</div>'; return; }
+  
+  el.innerHTML = conns.slice(0, 50).map((c, i) => {
+    const geo = c.geo || {};
+    const loc = geo.country ? `${geo.city || '?'}, ${geo.country}` : '';
+    const hostname = c.remote_hostname ? ` (${c.remote_hostname.slice(0,30)})` : '';
+    return `<div class="conn-row" onclick="showDetail(${i})">
+      <div class="conn-main">
+        <span class="conn-process">${esc(c.process_name || '?')}</span>
+        <span class="conn-endpoint">${esc(c.remote_ip)}:${c.remote_port}${esc(hostname)}</span>
+      </div>
+      <div class="conn-meta">
+        ${loc ? `<span class="geo">📍 ${esc(loc)}</span>` : ''}
+        ${geo.isp ? `<span class="isp">${esc(geo.isp.slice(0,25))}</span>` : ''}
+        ${c.io_read_human ? `<span class="io"><span class="down">↓${c.io_read_human}</span> <span class="up">↑${c.io_write_human}</span></span>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderCountries(byCountry) {
+  const el = document.getElementById('countryList');
+  const entries = Object.entries(byCountry).sort((a,b) => b[1] - a[1]);
+  if (!entries.length) { el.innerHTML = '<div class="empty-state">No country data</div>'; return; }
+  
+  const max = entries[0][1];
+  el.innerHTML = entries.map(([country, count]) => `
+    <div class="country-row">
+      <span class="country-name">${esc(country)}</span>
+      <div class="country-bar"><div class="country-bar-fill" style="width:${(count/max*100).toFixed(0)}%"></div></div>
+      <span class="country-count">${count}</span>
+    </div>
+  `).join('');
+}
+
+function renderPorts(ports) {
+  const el = document.getElementById('portList');
+  if (!ports.length) { el.innerHTML = '<div class="empty-state">No listening ports</div>'; return; }
+  
+  const sorted = [...ports].sort((a,b) => a.local_port - b.local_port);
+  el.innerHTML = sorted.map(p => `
+    <div class="port-row">
+      <span class="port-num">:${p.local_port}</span>
+      <span class="port-process">${esc(p.process_name || '?')}</span>
+      <span class="port-uptime">${p.process_uptime_human ? 'up ' + p.process_uptime_human.split('.')[0] : ''}</span>
+    </div>
+  `).join('');
+}
+
+function renderProcesses(byProc) {
+  const el = document.getElementById('procList');
+  const entries = Object.entries(byProc).sort((a,b) => b[1] - a[1]);
+  if (!entries.length) { el.innerHTML = '<div class="empty-state">No process data</div>'; return; }
+  
+  const max = entries[0][1];
+  el.innerHTML = entries.slice(0, 20).map(([proc, count]) => `
+    <div class="country-row">
+      <span class="country-name" style="font-family:var(--mono);font-size:12px;color:var(--accent-blue)">${esc(proc)}</span>
+      <div class="country-bar"><div class="country-bar-fill" style="width:${(count/max*100).toFixed(0)}%;background:var(--accent-blue)"></div></div>
+      <span class="country-count" style="background:var(--accent-blue-dim);color:var(--accent-blue)">${count}</span>
+    </div>
+  `).join('');
+}
+
+function showDetail(idx) {
+  if (!lastData) return;
+  const c = lastData.established_connections[idx];
+  if (!c) return;
+  const geo = c.geo || {};
+  const dp = document.getElementById('detailPanel');
+  dp.innerHTML = `<div class="conn-detail">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <span style="font-family:var(--mono);font-size:14px;font-weight:600;color:var(--accent-gold)">${esc(c.remote_ip)}:${c.remote_port}</span>
+      <button class="btn" onclick="document.getElementById('detailPanel').innerHTML=''">Close</button>
+    </div>
+    <div class="detail-grid">
+      <span class="detail-label">Process</span>
+      <span class="detail-value">${esc(c.process_name || '?')} (PID ${c.pid || '?'})</span>
+      <span class="detail-label">Command</span>
+      <span class="detail-value">${esc(c.process_cmdline || '?')}</span>
+      <span class="detail-label">User</span>
+      <span class="detail-value">${esc(c.process_user || '?')}</span>
+      <span class="detail-label">Hostname</span>
+      <span class="detail-value">${esc(c.remote_hostname || 'N/A')}</span>
+      <span class="detail-label">Location</span>
+      <span class="detail-value">${geo.city || '?'}, ${geo.region || '?'}, ${geo.country || '?'}</span>
+      <span class="detail-label">ISP</span>
+      <span class="detail-value">${esc(geo.isp || '?')}</span>
+      <span class="detail-label">Organization</span>
+      <span class="detail-value">${esc(geo.org || '?')}</span>
+      <span class="detail-label">AS number</span>
+      <span class="detail-value">${esc(geo.as_number || '?')}</span>
+      <span class="detail-label">Coordinates</span>
+      <span class="detail-value">${geo.lat || '?'}, ${geo.lon || '?'}</span>
+      <span class="detail-label">Timezone</span>
+      <span class="detail-value">${esc(geo.timezone || '?')}</span>
+      <span class="detail-label">Process uptime</span>
+      <span class="detail-value">${esc(c.process_uptime_human || '?')}</span>
+      <span class="detail-label">Process memory</span>
+      <span class="detail-value">${c.process_mem_mb || '?'} MB</span>
+      <span class="detail-label">Data received</span>
+      <span class="detail-value" style="color:var(--accent-green)">${c.io_read_human || '?'}</span>
+      <span class="detail-label">Data sent</span>
+      <span class="detail-value" style="color:var(--accent-gold)">${c.io_write_human || '?'}</span>
+      <span class="detail-label">Local endpoint</span>
+      <span class="detail-value">${c.local_ip}:${c.local_port}</span>
+    </div>
+  </div>`;
+  dp.scrollIntoView({ behavior: 'smooth' });
+}
+
+function exportJSON() {
+  if (!lastData) return;
+  const blob = new Blob([JSON.stringify(lastData, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `port_investigation_${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.json`;
+  a.click();
+}
+
+function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+// Auto-scan on load
+runScan();
+</script>
